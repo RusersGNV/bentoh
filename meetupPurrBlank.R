@@ -8,7 +8,8 @@ install.packages(c("gapminder", "tidyverse"))
 pop <- rnorm(10000)
 
 # Now we want to sample n individual from the population
-# and take the sample means. n = 1, 2, 3,...,10000.
+# and take the sample means. n = 1, 2, 3,...,1000.
+n <- 1:1000
 
 # Method 1: the for loop way
 m1 <- rep(NA, length(n))
@@ -118,4 +119,10 @@ AIC(m1, m2, m3, m4, m5)
 ### Exercise
 # Subset the gapminder data according to the following 
 # regions, then find the mean life expectancy and mean
-# GDP per capita
+# GDP per capita for each region in each year
+ANZ <- c("Australia", "New Zealand")
+SEA <- c("Cambodia", "Indonesia", "Malaysia", "Myanmar", "Philippines", 
+         "Singapore", "Thailand", "Vietnam")
+SA <- c("Bangladesh", "India", "Nepal", "Pakistan", "Sri Lanka")
+EA <- c("China", "Hong Kong, China", "Japan", "Korea, Dem. Rep.", "Korea, Rep.", 
+        "Taiwan")

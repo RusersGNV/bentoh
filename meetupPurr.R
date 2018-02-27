@@ -1,11 +1,14 @@
+install.packages(c("gapminder", "tidyverse"))
+
+### Case 1
+# Testing the idea: sample mean approaches population means
+# as sample size (n) increases
 # Fake population data, true mean = 0, true SD = 1
 pop <- rnorm(10000)
 
 # Now we want to sample n individual from the population
-# and take the sample means. n = 1, 2, 3,...,10000.
-# This way we can test the theory of sample mean approaches
-# population mean as sample size (n) increases.
-n <- 1:10000
+# and take the sample means. n = 1, 2, 3,...,1000.
+n <- 1:1000
 
 # Method 1: the for loop way
 m1 <- rep(NA, length(n))
@@ -17,6 +20,7 @@ plot(m1, type="l")
 
 # Cool but what if I have for-loop-phobia?
 # `purrr` allows us to avoid for loops, and has slightly cleaner code!
+# Method 2: the `purrr` way
 library(tidyverse)
 m2 <- map(n, ~ sample(pop, .x))
 head(m2)
@@ -42,19 +46,26 @@ for (i in n) {
 plot(m1$n, m1$mean, type="l")
 plot(m1$n, m1$sd, type="l")
 
-# What about the purrr way?
+# What about purrr?
+# We can "map" a function and get a vector or a df output!
+# (For free, if you know how to ask)
 m2 <- map(n, ~ sample(pop, .x)) %>%
   map_df(~ data.frame(mean = mean(.x), sd = sd(.x)),
          .id = "n")
 plot(m2$n, m2$mean, type="l")
 plot(m2$n, m2$sd, type="l")
 
-# So now we can "map" a function and get a vector or a df output!
-
-# Let's make this more complicated and with list!
+### Case 2
+# The "map" function doesn't just take vector as input.
+# In fact, "map" works extensively with list object.
 library(gapminder)
 
-gapminder
+# gapminder is a dataset with life expectancy, population
+# and GDP per capita from 1952 - 2007 (by every five years)
+# It's a good toy dataset
+head(gapminder, 15)
+
+# Let's say we have five models to predict life expectancy
 f1 <- lifeExp ~ pop
 f2 <- lifeExp ~ gdpPercap
 f3 <- lifeExp ~ pop + gdpPercap
@@ -75,13 +86,16 @@ summary(m5)
 
 AIC(m1, m2, m3, m4, m5)
 
-# So tedious!
-# Anyway for purrr to do this? Yes, of course
+# Quite tedious, and we ended up with lots of variables
+# in our environment...
+# Can purrr deal with this? Let's see if we can do it the 
+# "vector way", i.e. build a vector of five formulas.
 formulas <- c()
 formulas[1] <- f1
 
-# Nope vector doesn't work here because R doesn't have a vector object for formulas
-# So we have to use list
+# Nope, vector doesn't work here because vectors in R is 
+# only available for numeric, character and logical.
+# So we have to use list.
 formulas <- list(f1, f2, f3, f4, f5)
 mod <- formulas %>%
   map( ~ lm(.x, data=gapminder))
@@ -114,5 +128,21 @@ mod_bycty <- gap_bycty %>%
   map_df(~ data.frame(Rsquare = .x), .id="country")
 
 ### Exercise
+# Subset the gapminder data according to the following 
+# regions, then find the mean life expectancy and mean
+# GDP per capita for each region in each year
 ANZ <- c("Australia", "New Zealand")
-ANZ %in% gapminder$country
+SEA <- c("Cambodia", "Indonesia", "Malaysia", "Myanmar", "Philippines", 
+         "Singapore", "Thailand", "Vietnam")
+SA <- c("Bangladesh", "India", "Nepal", "Pakistan", "Sri Lanka")
+EA <- c("China", "Hong Kong, China", "Japan", "Korea, Dem. Rep.", "Korea, Rep.", 
+        "Taiwan")
+
+RegDat <- list(ANZ=ANZ, SEA=SEA, SA=SA, EA=EA) %>%
+  map(~ filter(gapminder, country %in% .x)) %>%
+  map(~ group_by(.x, year)) %>%
+  map_df(~ summarise(.x, lifeExp = mean(lifeExp), gdpPercap = mean(gdpPercap)),
+         .id = "region")
+  
+ggplot(RegDat, aes(x=year, y=lifeExp, col=region)) +
+  geom_line()
