@@ -96,6 +96,23 @@ mod %>%
                       stringsAsFactors = F))
 
 mod %>%
-  map(~ coef(.x)) %>% map(~ t(as.matrix(.x))) %>%
-  map_dfr(as.data.frame)
-unique(gapminder$country)
+  map(~ coef(.x)) %>% 
+  map(~ t(as.matrix(.x))) %>%
+  map_df(as.data.frame)
+
+### Case 2a
+# One regression for each country
+gap_bycty <- gapminder %>%
+  split(.$country)
+gap_bycty[[1]]
+gap_bycty$Ghana
+
+mod_bycty <- gap_bycty %>%
+  map(~ lm(lifeExp ~ gdpPercap, data=.x)) %>%
+  map(summary) %>%
+  map("r.squared") %>%
+  map_df(~ data.frame(Rsquare = .x), .id="country")
+
+### Exercise
+ANZ <- c("Australia", "New Zealand")
+ANZ %in% gapminder$country
