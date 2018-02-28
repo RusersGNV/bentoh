@@ -103,24 +103,30 @@ mod <- formulas %>%
 mod %>%
   map(summary)
 
+# Make a table of df and AIC
 mod %>%
   map_df(~ data.frame(formula = format(formula(.x)),
                       df = df.residual(.x),
                       AIC = AIC(.x),
                       stringsAsFactors = F))
 
+# Make a table of coefficients
 mod %>%
-  map(~ coef(.x)) %>% 
-  map(~ t(as.matrix(.x))) %>%
-  map_df(as.data.frame)
+  map(~ coef(.x)) %>%
+  map_df(~ as.data.frame(t(.x)))
 
 ### Case 2a
 # One regression for each country
+# Here we make use of the function "split()" which split
+# a big dataframe to a list of small dataframe given a 
+# specific factor.
 gap_bycty <- gapminder %>%
   split(.$country)
 gap_bycty[[1]]
 gap_bycty$Ghana
 
+# Build a table of two columns, country and R square value
+# by making use of the .id argument in map_df
 mod_bycty <- gap_bycty %>%
   map(~ lm(lifeExp ~ gdpPercap, data=.x)) %>%
   map(summary) %>%
@@ -138,6 +144,7 @@ SA <- c("Bangladesh", "India", "Nepal", "Pakistan", "Sri Lanka")
 EA <- c("China", "Hong Kong, China", "Japan", "Korea, Dem. Rep.", "Korea, Rep.", 
         "Taiwan")
 
+# Answer
 RegDat <- list(ANZ=ANZ, SEA=SEA, SA=SA, EA=EA) %>%
   map(~ filter(gapminder, country %in% .x)) %>%
   map(~ group_by(.x, year)) %>%
